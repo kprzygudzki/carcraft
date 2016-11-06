@@ -7,29 +7,26 @@ package pl.com.bottega.carcraft.model;
 public class Car {
 	private static final double FUEL_CAPACITY = 60.0;
 	private static final int DEFAULT_DISTANCE = 1;
-	private static final int DEFAULT_X = 0;
-	private static final int DEFAULT_Y = 0;
+	private static final Point DEFAULT_LOCATION = new Point(0,0);
 
 	private String name;
-	private int x;
-	private int y;
+	private Point currentPosition;
 	private double fuelLevel;
 	private double fuelConsumption;
 
-	public Car(String name, double fuelLevel, double fuelConsumption, int x, int y){
+	public Car(String name, double fuelLevel, double fuelConsumption, Point location){
 		this.name = name;
 		this.fuelLevel = Math.min(fuelLevel, FUEL_CAPACITY);
 		this.fuelConsumption = fuelConsumption;
-		this.x = x;
-		this.y = y;
+		this.currentPosition = location;
 	}
 
 	public Car(String name, double fuelLevel, double fuelConsumption){
-		this(name, fuelLevel, fuelConsumption, DEFAULT_X, DEFAULT_Y);
+		this(name, fuelLevel, fuelConsumption, DEFAULT_LOCATION);
 	}
 
-	private boolean targetIsOutOfBound(int targetX, int targetY){
-		return targetX < 0 && targetY < 0;
+	private boolean targetIsOutOfBound(Point location){
+		return location.getX() < 0 && location.getY() < 0;
 	}
 
 	private double requiredFuel(double distance){
@@ -40,45 +37,50 @@ public class Car {
 		return requiredFuel > fuelLevel;
 	}
 
-	public void moveTo(int targetX, int targetY){
-		int distanceX = Math.abs(targetX - x);
-		int distanceY = Math.abs(targetY - y);
-		double totalDistance = distanceX + distanceY;
+	public void moveTo(Point destination){
+		Vector displacement = new Vector(currentPosition, destination);
+		double totalDistance = displacement.getX() + displacement.getY();
 
-		if (notEnoughFuel(requiredFuel(totalDistance)) || targetIsOutOfBound(targetX, targetY))
+		// int distanceX = Math.abs(destination.x - currentPosition.x);
+		// int distanceY = Math.abs(destination.y - currentPosition.y);
+		// double totalDistance = distanceX + distanceY;
+
+		if (notEnoughFuel(requiredFuel(totalDistance)) || targetIsOutOfBound(destination))
 			return;
 
-		x = targetX;
-		y = targetY;
-
+		currentPosition.setPoint(destination);
 		fuelLevel -= totalDistance * fuelConsumption;
 	}
 
-	public void moveShort(int targetX, int targetY){
-		int distanceX = targetX - x;
-		int distanceY = targetY - y;
-		double totalDistance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+	public void moveShort(Point destination){
+		Vector displacement = new Vector(currentPosition, destination);
+		double totalDistance = displacement.getLength();
 
-		if (notEnoughFuel(requiredFuel(totalDistance)) || targetIsOutOfBound(targetX, targetY))
+		// int distanceX = destination.x - currentPosition.x;
+		// int distanceY = destination.y - currentPosition.y;
+		// double totalDistance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+		if (notEnoughFuel(requiredFuel(totalDistance)) || targetIsOutOfBound(destination))
 			return;
 
-		x = targetX;
-		y = targetY;
+		currentPosition.setPoint(destination);
 		fuelLevel -= totalDistance * fuelConsumption;
 	}
 
+	public void moveBy(Vector displacement){
+		moveTo(new Point(currentPosition, displacement));
+	}
+
+	/*
 	public void moveBy(int distanceX, int distanceY){
-		int targetX = x + distanceX;
-		int targetY = y + distanceY;
-
-		moveTo(targetX, targetY);
+		moveTo(new Point(currentPosition.x + distanceX, currentPosition.y + distanceY));
 	}
+	*/
 
 	public void left(int distance){
-		int targetX = x + distance;
-		int targetY = y;
 
-		moveTo(targetX, targetY);
+		Vector displacement = new Vector(-distance, 0);
+		moveBy(displacement);
 	}
 
 	public void left(){
@@ -86,10 +88,8 @@ public class Car {
 	}
 
 	public void right(int distance){
-		int targetX = x + distance;
-		int targetY = y;
-
-		moveTo(targetX, targetY);
+		Vector displacement = new Vector(distance, 0);
+		moveBy(displacement);
 	}
 
 	public void right(){
@@ -97,10 +97,8 @@ public class Car {
 	}
 
 	public void up(int distance){
-		int targetX = x + distance;
-		int targetY = y;
-
-		moveTo(targetX, targetY);
+		Vector displacement = new Vector(0, distance);
+		moveBy(displacement);
 	}
 
 	public void up(){
@@ -108,22 +106,24 @@ public class Car {
 	}
 
 	public void down(int distance){
-		int targetX = x + distance;
-		int targetY = y;
-
-		moveTo(targetX, targetY);
+		Vector displacement = new Vector(0, -distance);
+		moveBy(displacement);
 	}
 
 	public void down(){
 		down(DEFAULT_DISTANCE);
 	}
 
+	public Point getCurrentPosition() {
+		return currentPosition;
+	}
+
 	public int getX(){
-		return x;
+		return currentPosition.getX();
 	}
 
 	public int getY(){
-		return y;
+		return currentPosition.getY();
 	}
 
 	public String getName(){
